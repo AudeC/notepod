@@ -30,8 +30,9 @@ namespace NOTES {
 
 		
 	protected:
-		Note& operator=(const Note& a);
+        //Note& operator=(const Note& a);
 		//Note(const Note& a);
+    public:
 		Note(const string& i, const string& ti) : id(i), title(ti), creation(TIME::Date()), modification(TIME::Date()) {};
 
 	public:
@@ -150,12 +151,13 @@ namespace NOTES {
 		static Handler handler;
 
 		//NotesManager& operator=(const NotesManager& m);
-		NotesManager(): filename("notes.json"){}
+        //NotesManager(): filename("notes.json"){}
 		//NotesManager(const NotesManager& m);
 
 		friend struct Handler;
-
+    public:
 		void addNote(Note* a);
+    private:
 		void addRelation(Relation* r); 
 	
 	public:
@@ -174,7 +176,7 @@ namespace NOTES {
 		Media& getNewMedia(const string& id, enum Mediatype m = image);
 		Relation& getNewRelation(const string& n, const string& d = "", bool o = false);
 		Relation& getRelation(const string& n);
-
+        vector<Note> getNotes(){ return notes; }
 		void load(const string& f);
 		void save() const;
 		virtual ~NotesManager()

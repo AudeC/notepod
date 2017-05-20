@@ -2,6 +2,8 @@
 
 FenetrePrincipale::FenetrePrincipale() : QMainWindow()
 {
+    manager = NotesManager::getInstance();
+
     setWindowTitle("Notepod-- v0.0");
     setMinimumHeight(600);
     setMinimumWidth(800);
@@ -13,9 +15,6 @@ FenetrePrincipale::FenetrePrincipale() : QMainWindow()
     QAction *actionNouveau = new QAction("&Nouvelle note", this);
     menuFichier->addAction(actionNouveau);
     connect(actionNouveau, SIGNAL(triggered()), this, SLOT(ouvrirDialogue()));
-    QAction *actionOuvrir = new QAction("&Ouvrir note", this);
-    menuFichier->addAction(actionOuvrir);
-    connect(actionOuvrir, SIGNAL(triggered()), this, SLOT(ouvrirNote()));
     QAction *actionQuitter = new QAction("&Quitter", this);
     menuFichier->addAction(actionQuitter);
     connect(actionQuitter, SIGNAL(triggered()), qApp, SLOT(quit()));
@@ -26,6 +25,8 @@ FenetrePrincipale::FenetrePrincipale() : QMainWindow()
     menuAffichage = menuBar()->addMenu("&Affichage");
 
     creerDock();
+
+
     /*QStatusBar *m_statusBar = new StatusBar(this);
     m_statusBar->showMessage("Trololo");
     setStatusBar(m_statusBar);*/
@@ -46,22 +47,27 @@ void FenetrePrincipale::ouvrirDialogue()
     ah.exec();
 }
 
-void FenetrePrincipale::ouvrirNote()
-{
-    QTextEdit *zoneTexte1 = new QTextEdit;
-    QMdiSubWindow *sousFenetre1 = zoneCentrale->addSubWindow(zoneTexte1);
-    sousFenetre1->show();
-}
-
 void FenetrePrincipale::creerDock()
 {
     QDockWidget *dock = new QDockWidget(tr("Notes actives"), this);
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     listeNotes = new QListWidget(dock);
-    listeNotes->addItems(QStringList()
-            << "Note 1"
-            << "Note 2");
+    manager.addNote(new Note("id1","montest"));
+    manager.addNote(new Note("id2","montest2"));
+    for(Note i : manager.getNotes())
+    {
+        listeNotes->addItem(QString::fromStdString(i.getTitle()));
+    }
     dock->setWidget(listeNotes);
     addDockWidget(Qt::RightDockWidgetArea, dock);
     menuAffichage->addAction(dock->toggleViewAction());
+    //connect(listeNotes, SIGNAL(currentTextChanged(QString)),this, SLOT(insererNotes(QString)));
 }
+
+/*void FenetrePrincipale::insererNote(const QString& note)
+ {
+     if (note.isEmpty())
+         return;
+     listeNotes = note.split(", ");
+ }*/
+

@@ -4,7 +4,11 @@ QT+=widgets
 
 SOURCES += \
     main.cpp \
-    fenetre.cpp
+    fenetre.cpp \
+    notes.cpp \
+    timing.cpp
 
 HEADERS += \
-    fenetre.h
+    fenetre.h \
+    notes.h \
+    timing.h
