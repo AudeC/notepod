@@ -12,9 +12,8 @@ $RECYCLE.BIN/
 
 # Visual studio
 .vs/
-.x64/
-.Debug/
-
+x64/
+Debug/
 # Windows Installer files
 *.cab
 *.msi
