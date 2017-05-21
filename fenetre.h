@@ -27,9 +27,12 @@ private:
     QPushButton* boutonAjouter;
     QVBoxLayout* dockLayout;
     QWidget* widget;
+    QMdiSubWindow* sousFenetre1;
     QWidget* sousFenetre;
     QLineEdit* id;
     QLineEdit* titre;
+    QPushButton* boutonValiderNote;
+    QDockWidget* dock2;
     void creerDock();
 public:
     FenetrePrincipale();
@@ -38,6 +41,8 @@ public slots:
     void ouvrirDialogue();
     void sousFenetreAjoutNote();
     void insererNote();
+    void unhide();
+    void cacherSousFenetre();
 };
 
 #endif // FENETRE_H

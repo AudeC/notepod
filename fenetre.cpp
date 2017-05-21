@@ -43,6 +43,7 @@ void FenetrePrincipale::ouvrirDialogue()
     ah.setDefaultButton(QMessageBox::Ok);
     QPixmap icon("C:/Users/SilverEye/notepod/denis.brogniart.ah.png");
     ah.setIconPixmap(icon);
+    ah.setWindowIcon(QIcon("C:/Users/SilverEye/notepod/1495391974_cancel_16.png"));
     ah.show();
     ah.exec();
 }
@@ -50,6 +51,10 @@ void FenetrePrincipale::ouvrirDialogue()
 void FenetrePrincipale::creerDock()
 {
     dock = new QDockWidget(tr("Notes actives"), this);
+    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+
+    dock2 = new QDockWidget(tr("Relations"), this);
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 
     dockLayout = new QVBoxLayout;
@@ -69,9 +74,10 @@ void FenetrePrincipale::creerDock()
     widget->setLayout(dockLayout);
 
     dock->setWidget(widget);
-    addDockWidget(Qt::RightDockWidgetArea, dock);
+    addDockWidget(Qt::LeftDockWidgetArea, dock);
+    addDockWidget(Qt::RightDockWidgetArea, dock2);
 
-    menuAffichage->addAction(dock->toggleViewAction());
+    menuAffichage->addAction(dock2->toggleViewAction());
 }
 
 void FenetrePrincipale::sousFenetreAjoutNote()
@@ -86,25 +92,41 @@ void FenetrePrincipale::sousFenetreAjoutNote()
     formLayout->addRow("Titre", titre);
     layoutSousFenetre->addLayout(formLayout);
 
-    QPushButton* boutonValiderNote = new QPushButton("Ajouter");
+    boutonValiderNote = new QPushButton("Ajouter");
     connect(boutonValiderNote, SIGNAL(clicked()), this, SLOT(insererNote()));
+    boutonValiderNote->setShortcut(QKeySequence(Qt::Key_Return));
     layoutSousFenetre->addWidget(boutonValiderNote);
+    boutonValiderNote->setDisabled(true);
+    connect(id, SIGNAL(textChanged(QString)), this, SLOT(unhide()));
+    connect(titre, SIGNAL(textChanged(QString)), this, SLOT(unhide()));
 
     fenetre->setLayout(layoutSousFenetre);
-    QMdiSubWindow* sousFenetre1 = zoneCentrale->addSubWindow(fenetre);
+    sousFenetre1 = zoneCentrale->addSubWindow(fenetre);
     sousFenetre1->setWindowTitle("Nouvelle note");
     sousFenetre1->setWindowIcon(QIcon("C:/Users/SilverEye/notepod/edit-set-5-256.png"));
     sousFenetre1->show();
+    connect(boutonValiderNote, SIGNAL(clicked()), this, SLOT(cacherSousFenetre()));
 }
 
 void FenetrePrincipale::insererNote()
 {
     manager.addNote(new Note(id->text().toStdString(),titre->text().toStdString()));
     listeNotes->addItem(titre->text());
-    foreach(QLineEdit *widget, this->findChildren<QLineEdit*>())
+    foreach(QLineEdit *line, this->findChildren<QLineEdit*>())
     {
-        widget->clear();
+        line->clear();
     }
     //ajouter une erreur au cas où l'identificateur existerait déjà
 }
+
+void FenetrePrincipale::unhide()
+{
+   boutonValiderNote->setDisabled(false);
+}
+
+void FenetrePrincipale::cacherSousFenetre()
+{
+    sousFenetre1->hide();
+}
+
 
