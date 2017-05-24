@@ -115,7 +115,7 @@
     <ClInclude Include="timing.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="main_test.cpp" />
     <ClCompile Include="notes.cpp" />
     <ClCompile Include="timing.cpp" />
   </ItemGroup>
