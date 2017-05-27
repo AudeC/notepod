@@ -38,7 +38,7 @@ void FenetrePrincipale::ouvrirDialogue()
     QMessageBox ah;
 
     ah.setWindowTitle("Ah!");
-    ah.setText("Ça veut dire que...?");
+    ah.setText("Ça veut dire que cette fonctionalité n'est pas encore implémentée...?");
     ah.setStandardButtons(QMessageBox::Ok);
     ah.setDefaultButton(QMessageBox::Ok);
     QPixmap icon("C:/Users/SilverEye/notepod/denis.brogniart.ah.png");
