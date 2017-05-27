@@ -26,9 +26,7 @@ namespace NOTES {
 		TIME::Date creation;
 		TIME::Date modification;
 		bool actif;
-		// éviter la duplication d'articles
 
-		
 	protected:
         //Note& operator=(const Note& a);
 		//Note(const Note& a);
