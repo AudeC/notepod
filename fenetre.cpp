@@ -8,7 +8,7 @@ FenetrePrincipale::FenetrePrincipale() : QMainWindow()
     // Initialisation du NotesManager
     manager = NotesManager::getInstance();
 
-    // Paramètrage de la fenêtre
+    // Paramétrage de la fenêtre
     setWindowTitle("Notepod-- v0.0");
     setMinimumHeight(600);
     setMinimumWidth(800);
@@ -19,14 +19,14 @@ FenetrePrincipale::FenetrePrincipale() : QMainWindow()
     menuFichier = menuBar()->addMenu("&Fichier");
     QAction *actionNouveau = new QAction("&Nouvelle note", this);
     menuFichier->addAction(actionNouveau);
-    connect(actionNouveau, SIGNAL(triggered()), this, SLOT(sousFenetreAjoutNote()));
+    connect(actionNouveau, SIGNAL(triggered()), this, SLOT(creerSFNote()));
     QAction *actionQuitter = new QAction("&Quitter", this);
     menuFichier->addAction(actionQuitter);
     connect(actionQuitter, SIGNAL(triggered()), qApp, SLOT(quit()));
     menuEdition = menuBar()->addMenu("&Edition");
     QAction *actionSauver = new QAction("&Sauver", this);
     menuEdition->addAction(actionSauver);
-    connect(actionSauver, SIGNAL(triggered()), this, SLOT(ouvrirDialogue()));
+    connect(actionSauver, SIGNAL(triggered()), this, SLOT(ouvrirDenis()));
     menuAffichage = menuBar()->addMenu("&Affichage");
 
 
@@ -39,25 +39,7 @@ FenetrePrincipale::FenetrePrincipale() : QMainWindow()
 }
 
 /*
- * Easter Egg - Denis Brogniart
- */
-void FenetrePrincipale::ouvrirDialogue()
-{
-    QMessageBox ah;
-
-    ah.setWindowTitle("Ah!");
-    ah.setText("Ça veut dire que cette fonctionalité n'est pas encore implémentée...?");
-    ah.setStandardButtons(QMessageBox::Ok);
-    ah.setDefaultButton(QMessageBox::Ok);
-    QPixmap icon("C:/Users/SilverEye/notepod/denis.brogniart.ah.png");
-    ah.setIconPixmap(icon);
-    ah.setWindowIcon(QIcon("C:/Users/SilverEye/notepod/1495391974_cancel_16.png"));
-    ah.show();
-    ah.exec();
-}
-
-/*
- * Dock (panneau latéral pour afficher les notes et les relations)
+ * Docks (panneaux latéraux pour afficher les notes et les relations)
  */
 void FenetrePrincipale::creerDock()
 {
@@ -77,13 +59,14 @@ void FenetrePrincipale::creerDock()
     {
         listeNotes->addItem(QString::fromStdString(i.getId()));
     }
-    connect(listeNotes, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(visualiserNote(QListWidgetItem*)));
+    connect(listeNotes, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(visualiserNote(QListWidgetItem*)));
     dockLayout->addWidget(listeNotes);
 
-    // Bouton
+    // Bouton nouvelle note
     boutonAjouter = new QPushButton("Nouvelle note", this);
-    connect(boutonAjouter, SIGNAL(clicked()),this, SLOT(sousFenetreAjoutNote()));
+    connect(boutonAjouter, SIGNAL(clicked()),this, SLOT(creerSFNote()));
     dockLayout->addWidget(boutonAjouter);
+
 
     widget = new QWidget(this);
     widget->setLayout(dockLayout);
@@ -96,81 +79,51 @@ void FenetrePrincipale::creerDock()
     menuAffichage->addAction(dock2->toggleViewAction());
 }
 
-/*
- * Ajouter une note
- */
-void FenetrePrincipale::sousFenetreAjoutNote()
+void FenetrePrincipale::creerSFNote()
 {
-    QWidget* fenetre = new QWidget(this);
-    QVBoxLayout* layoutSousFenetre = new QVBoxLayout;
+    FenetreAjoutNote* fAjout= new FenetreAjoutNote(zoneCentrale);
+    fAjout->show();
+    connect(fAjout, SIGNAL(nouvelleNote(QString,QString)),this, SLOT(receptionNote(QString,QString)));
+}
 
-    id = new QLineEdit;
-    titre = new QLineEdit;
-    QFormLayout* formLayout = new QFormLayout;
-    formLayout->addRow("Identificateur", id);
-    formLayout->addRow("Titre", titre);
-    layoutSousFenetre->addLayout(formLayout);
-
-    boutonValiderNote = new QPushButton("Ajouter");
-    connect(boutonValiderNote, SIGNAL(clicked()), this, SLOT(insererNote()));
-    boutonValiderNote->setShortcut(QKeySequence(Qt::Key_Return));
-    layoutSousFenetre->addWidget(boutonValiderNote);
-    boutonValiderNote->setDisabled(true);
-    connect(id, SIGNAL(textChanged(QString)), this, SLOT(unhide()));
-    connect(titre, SIGNAL(textChanged(QString)), this, SLOT(unhide()));
-
-    fenetre->setLayout(layoutSousFenetre);
-    sousFenetre1 = zoneCentrale->addSubWindow(fenetre);
-    sousFenetre1->setWindowTitle("Nouvelle note");
-    sousFenetre1->setWindowIcon(QIcon("C:/Users/SilverEye/notepod/edit-set-5-256.png"));
-    sousFenetre1->show();
-    connect(boutonValiderNote, SIGNAL(clicked()), this, SLOT(cacherSousFenetre()));
+void FenetrePrincipale::receptionNote(QString id, QString titre)
+{
+    manager.addNote(new Note(id.toStdString(),titre.toStdString()));
+    listeNotes->addItem(id);
 }
 
 /*
  * Voir une note
  */
-void FenetrePrincipale::visualiserNote(QListWidgetItem * i)
+void FenetrePrincipale::visualiserNote(QListWidgetItem* i)
 {
-    QWidget* fenetre = new QWidget(this);
+    QWidget* fenetre2 = new QWidget(this);
+    QVBoxLayout* layoutSousFenetreVisuNote = new QVBoxLayout;
 
-    Note& n = manager.getNote(i->text().toLocal8Bit().constData());
+    //Récupération de la note dans le manager
+    Note& n = manager.getNote(i->text().toLocal8Bit().constData());    
 
-    fenVisualisation = zoneCentrale->addSubWindow(fenetre);
-    fenVisualisation->setWindowTitle("Voir une note");
+    QLineEdit* titre2 = new QLineEdit;
+    QFormLayout* visuNoteLayout = new QFormLayout;
+    titre2->setPlaceholderText(QString::fromStdString(n.getTitle()));
+    visuNoteLayout->addRow("Titre", titre2);
+    layoutSousFenetreVisuNote->addLayout(visuNoteLayout);
+    titre2->setDisabled(true);
+
+    fenetre2->setLayout(layoutSousFenetreVisuNote);
+    fenVisualisation = zoneCentrale->addSubWindow(fenetre2);
+    fenVisualisation->setWindowTitle(QString::fromStdString(n.getId()));
     fenVisualisation->setWindowIcon(QIcon("C:/Users/SilverEye/notepod/edit-set-5-256.png"));
     fenVisualisation->setBaseSize(200, 200);
-
-    visTitre = new QLabel(QString::fromStdString(n.getTitle()), fenVisualisation);
 
     fenVisualisation->show();
 
 }
 
-/*
- *  Insertion de note
- */
-void FenetrePrincipale::insererNote()
-{
-    manager.addNote(new Note(id->text().toStdString(),titre->text().toStdString()));
-    listeNotes->addItem(id->text());
 
-    // Nettoyer les lignes
-    foreach(QLineEdit *line, this->findChildren<QLineEdit*>())
-    {
-        line->clear();
-    }
-    // TODO: ajouter une erreur au cas où l'identificateur existerait déjà
-}
 
-void FenetrePrincipale::unhide()
-{
-   boutonValiderNote->setDisabled(false);
-}
 
-void FenetrePrincipale::cacherSousFenetre()
-{
-    sousFenetre1->hide();
-}
+
+
 
 
