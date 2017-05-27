@@ -1,16 +1,21 @@
 #include "fenetre.h"
 
+/*
+ * Constructeur de la fenêtre principale
+ */
 FenetrePrincipale::FenetrePrincipale() : QMainWindow()
 {
+    // Initialisation du NotesManager
     manager = NotesManager::getInstance();
 
+    // Paramètrage de la fenêtre
     setWindowTitle("Notepod-- v0.0");
     setMinimumHeight(600);
     setMinimumWidth(800);
-
     zoneCentrale = new QMdiArea;
     setCentralWidget(zoneCentrale);
 
+    // Barre d'outils
     menuFichier = menuBar()->addMenu("&Fichier");
     QAction *actionNouveau = new QAction("&Nouvelle note", this);
     menuFichier->addAction(actionNouveau);
@@ -24,6 +29,7 @@ FenetrePrincipale::FenetrePrincipale() : QMainWindow()
     connect(actionSauver, SIGNAL(triggered()), this, SLOT(ouvrirDialogue()));
     menuAffichage = menuBar()->addMenu("&Affichage");
 
+
     creerDock();
 
 
@@ -32,7 +38,9 @@ FenetrePrincipale::FenetrePrincipale() : QMainWindow()
     setStatusBar(m_statusBar);*/
 }
 
-
+/*
+ * Easter Egg - Denis Brogniart
+ */
 void FenetrePrincipale::ouvrirDialogue()
 {
     QMessageBox ah;
@@ -48,8 +56,12 @@ void FenetrePrincipale::ouvrirDialogue()
     ah.exec();
 }
 
+/*
+ * Dock (panneau latéral pour afficher les notes et les relations)
+ */
 void FenetrePrincipale::creerDock()
 {
+    // Création des docks
     dock = new QDockWidget(tr("Notes actives"), this);
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
@@ -59,13 +71,16 @@ void FenetrePrincipale::creerDock()
 
     dockLayout = new QVBoxLayout;
 
+    // Ajout des notes
     listeNotes = new QListWidget(dock);
     for(Note i : manager.getNotes())
     {
-        listeNotes->addItem(QString::fromStdString(i.getTitle()));
+        listeNotes->addItem(QString::fromStdString(i.getId()));
     }
+    connect(listeNotes, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(visualiserNote(QListWidgetItem*)));
     dockLayout->addWidget(listeNotes);
 
+    // Bouton
     boutonAjouter = new QPushButton("Nouvelle note", this);
     connect(boutonAjouter, SIGNAL(clicked()),this, SLOT(sousFenetreAjoutNote()));
     dockLayout->addWidget(boutonAjouter);
@@ -73,6 +88,7 @@ void FenetrePrincipale::creerDock()
     widget = new QWidget(this);
     widget->setLayout(dockLayout);
 
+    // "Accrocher" les docks
     dock->setWidget(widget);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
     addDockWidget(Qt::RightDockWidgetArea, dock2);
@@ -80,6 +96,9 @@ void FenetrePrincipale::creerDock()
     menuAffichage->addAction(dock2->toggleViewAction());
 }
 
+/*
+ * Ajouter une note
+ */
 void FenetrePrincipale::sousFenetreAjoutNote()
 {
     QWidget* fenetre = new QWidget(this);
@@ -108,15 +127,40 @@ void FenetrePrincipale::sousFenetreAjoutNote()
     connect(boutonValiderNote, SIGNAL(clicked()), this, SLOT(cacherSousFenetre()));
 }
 
+/*
+ * Voir une note
+ */
+void FenetrePrincipale::visualiserNote(QListWidgetItem * i)
+{
+    QWidget* fenetre = new QWidget(this);
+
+    Note& n = manager.getNote(i->text().toLocal8Bit().constData());
+
+    fenVisualisation = zoneCentrale->addSubWindow(fenetre);
+    fenVisualisation->setWindowTitle("Voir une note");
+    fenVisualisation->setWindowIcon(QIcon("C:/Users/SilverEye/notepod/edit-set-5-256.png"));
+    fenVisualisation->setBaseSize(200, 200);
+
+    visTitre = new QLabel(QString::fromStdString(n.getTitle()), fenVisualisation);
+
+    fenVisualisation->show();
+
+}
+
+/*
+ *  Insertion de note
+ */
 void FenetrePrincipale::insererNote()
 {
     manager.addNote(new Note(id->text().toStdString(),titre->text().toStdString()));
-    listeNotes->addItem(titre->text());
+    listeNotes->addItem(id->text());
+
+    // Nettoyer les lignes
     foreach(QLineEdit *line, this->findChildren<QLineEdit*>())
     {
         line->clear();
     }
-    //ajouter une erreur au cas où l'identificateur existerait déjà
+    // TODO: ajouter une erreur au cas où l'identificateur existerait déjà
 }
 
 void FenetrePrincipale::unhide()
