@@ -79,11 +79,18 @@ void FenetrePrincipale::creerDock()
     menuAffichage->addAction(dock2->toggleViewAction());
 }
 
+/*
+ * Implémentation des slots de FenetrePrincipale
+ */
 void FenetrePrincipale::creerSFNote()
 {
-    FenetreAjoutNote* fAjout= new FenetreAjoutNote(zoneCentrale);
-    fAjout->show();
-    connect(fAjout, SIGNAL(nouvelleNote(QString,QString)),this, SLOT(receptionNote(QString,QString)));
+    sousFenetre = new QMdiSubWindow;
+    ContenuFenetreAjoutNote* contenuAjout = new ContenuFenetreAjoutNote;
+    sousFenetre = zoneCentrale->addSubWindow(contenuAjout);
+    sousFenetre->show();
+    connect(contenuAjout, SIGNAL(demandeRedimensionnement()), this, SLOT(redimensionnerFenetre()));
+    connect(contenuAjout, SIGNAL(nouvelleNote(QString,QString)),this, SLOT(receptionNote(QString,QString)));
+    connect(contenuAjout->getBoutonValiderNote(), SIGNAL(clicked()), this, SLOT(fermerSousFenetre()));
 }
 
 void FenetrePrincipale::receptionNote(QString id, QString titre)
@@ -92,32 +99,21 @@ void FenetrePrincipale::receptionNote(QString id, QString titre)
     listeNotes->addItem(id);
 }
 
+void FenetrePrincipale::redimensionnerFenetre()
+{
+    sousFenetre->resize(500,400);
+    sousFenetre->updateGeometry();
+}
+
 /*
  * Voir une note
  */
 void FenetrePrincipale::visualiserNote(QListWidgetItem* i)
 {
-    QWidget* fenetre2 = new QWidget(this);
-    QVBoxLayout* layoutSousFenetreVisuNote = new QVBoxLayout;
-
-    //Récupération de la note dans le manager
-    Note& n = manager.getNote(i->text().toLocal8Bit().constData());    
-
-    QLineEdit* titre2 = new QLineEdit;
-    QFormLayout* visuNoteLayout = new QFormLayout;
-    titre2->setPlaceholderText(QString::fromStdString(n.getTitle()));
-    visuNoteLayout->addRow("Titre", titre2);
-    layoutSousFenetreVisuNote->addLayout(visuNoteLayout);
-    titre2->setDisabled(true);
-
-    fenetre2->setLayout(layoutSousFenetreVisuNote);
-    fenVisualisation = zoneCentrale->addSubWindow(fenetre2);
-    fenVisualisation->setWindowTitle(QString::fromStdString(n.getId()));
-    fenVisualisation->setWindowIcon(QIcon("C:/Users/SilverEye/notepod/edit-set-5-256.png"));
-    fenVisualisation->setBaseSize(200, 200);
-
-    fenVisualisation->show();
-
+    sousFenetre = new QMdiSubWindow;
+    ContenuFenetreVisualisationNote* contenuVisualisation = new ContenuFenetreVisualisationNote(i);
+    sousFenetre = zoneCentrale->addSubWindow(contenuVisualisation);
+    sousFenetre->show();
 }
 
 

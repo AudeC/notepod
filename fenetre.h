@@ -56,94 +56,178 @@ protected:
     QVBoxLayout* dockLayout;
     QWidget* widget;
 
-    // Visualiser note
-    QMdiSubWindow* fenVisualisation;
-    QLabel* visTitre;
-
     QDockWidget* dock2;
     void creerDock();
+
+    QMdiSubWindow* sousFenetre;
 public:
     FenetrePrincipale();
-    NotesManager getManager() const {return manager;}
 signals:
 
 public slots:
-    void unhide(QWidget* widget) {widget->setDisabled(false);}
     void creerSFNote();
     void receptionNote(QString, QString);
     void visualiserNote(QListWidgetItem*);
     void ouvrirDenis(){Denis ah; ah.ouvrir();}
+    void fermerSousFenetre()
+    {
+        sousFenetre->hide();
+        delete sousFenetre;
+    }
+    void redimensionnerFenetre();
 };
 
-class SousFenetre : public QWidget
+class ContenuSousFenetre : public QWidget
 {
     Q_OBJECT
 protected:
-    NotesManager manager;
-    QMdiSubWindow* fenetre;
-    QWidget* contenuFenetre;
-    QVBoxLayout* layoutFenetre;
+    QGridLayout* layoutFenetre;
     QFormLayout* formLayout;
     QLineEdit* titre;
+
 public:
-    SousFenetre()
+    ContenuSousFenetre()
     {
-        manager = NotesManager::getInstance();
-        fenetre->setWindowIcon(QIcon("C:/Users/SilverEye/notepod/edit-set-5-256.png"));
+        layoutFenetre = new QGridLayout;
+        formLayout = new QFormLayout;
+        titre = new QLineEdit;
+        setWindowIcon(QIcon("C:/Users/SilverEye/notepod/edit-set-5-256.png"));
     }
 public slots:
-    void cacherSousFenetre() {fenetre->hide();}
+    void ouvrirDenis(){Denis ah; ah.ouvrir();}
 };
 
-class FenetreAjoutNote : public SousFenetre
+class ContenuFenetreAjoutNote : public ContenuSousFenetre
 {
     Q_OBJECT
 protected:
     QLineEdit* id;
     QPushButton* boutonValiderNote;
+    QVBoxLayout* layoutBoutons;
+    QHBoxLayout* layoutAjout;
+    QPushButton* boutonTexte;
+    QPushButton* boutonFichier;
+    QLineEdit* adresseFichier;
+    QPushButton* boutonTache;
+
 public:
-    FenetreAjoutNote(QMdiArea * zoneCentrale): SousFenetre()
+    ContenuFenetreAjoutNote(): ContenuSousFenetre()
     {
         id = new QLineEdit;
-        titre = new QLineEdit;
-        QFormLayout* ajoutNoteLayout = new QFormLayout;
-        ajoutNoteLayout->addRow("Identificateur", id);
-        ajoutNoteLayout->addRow("Titre", titre);
-        layoutFenetre->addLayout(ajoutNoteLayout);
+        formLayout->addRow("Identificateur", id);
+        formLayout->addRow("Titre", titre);
+        layoutFenetre->addLayout(formLayout, 0, 0);
 
-        boutonValiderNote = new QPushButton("Ajouter");
+        layoutBoutons = new QVBoxLayout;
+        boutonTexte = new QPushButton("Ajouter un texte");
+        connect(boutonTexte, SIGNAL(clicked()), this, SLOT(widgetAjouterTexte()));
+        layoutBoutons->addWidget(boutonTexte);
+        boutonTache = new QPushButton("Ajouter une tâche");
+        connect(boutonTache, SIGNAL(clicked()), this, SLOT(ouvrirDenis()));
+        layoutBoutons->addWidget(boutonTache);
+        boutonFichier = new QPushButton("Ajouter un fichier");
+        connect(boutonFichier, SIGNAL(clicked()), this, SLOT(widgetAjouterFichier()));
+        layoutBoutons->addWidget(boutonFichier);
+        layoutFenetre->addLayout(layoutBoutons, 0, 1);
+
+        boutonValiderNote = new QPushButton("Créer la nouvelle note");
         connect(boutonValiderNote, SIGNAL(clicked()), this, SLOT(insererNote()));
         boutonValiderNote->setShortcut(QKeySequence(Qt::Key_Return));
-        layoutFenetre->addWidget(boutonValiderNote);
+        layoutFenetre->addWidget(boutonValiderNote, 3, 0, 1, 2);
         boutonValiderNote->setDisabled(true);
-        connect(id, SIGNAL(textChanged(QString)), this, SLOT(unhide()));
-        connect(titre, SIGNAL(textChanged(QString)), this, SLOT(unhide()));
-
-        contenuFenetre->setLayout(layoutFenetre);
-        fenetre = zoneCentrale->addSubWindow(contenuFenetre);
-        fenetre->setWindowTitle("Nouvelle note");
+        connect(id, SIGNAL(textChanged(QString)), this, SLOT(montrerBouton()));
+        connect(titre, SIGNAL(textChanged(QString)), this, SLOT(montrerBouton()));
+        /*if (&&) emit formulaireRempli();
+        connect(this, SIGNAL(formulaireRempli()), this, SLOT(montrerBouton()));*/
+        //amélioration: faire en sorte que le slot ne soit appelé que si les deux signaux ont été émis
+        setLayout(layoutFenetre);
+        setWindowTitle("Nouvelle note");
     }
+
+    QPushButton* getBoutonValiderNote() {return boutonValiderNote;}
+
 signals:
     void nouvelleNote(QString id, QString titre);
+    //void formulaireRempli();
+    void demandeRedimensionnement();
 
 public slots:
     void insererNote()
     {
         emit nouvelleNote(id->text(), titre->text());
+
+        //s'occuper aussi de l'ajout de texte, fichier et tâche
+
         // Nettoyer les lignes
-        foreach(QLineEdit* line, this->findChildren<QLineEdit*>())
+        /*foreach(QLineEdit* line, this->findChildren<QLineEdit*>())
         {
             line->clear();
-        }
+        }*/
         // TODO: ajouter une erreur au cas où l'identificateur existerait déjà
     }
 
+    void montrerBouton() {boutonValiderNote->setDisabled(false);}
 
+    void widgetAjouterTexte()
+    {
+        emit demandeRedimensionnement();
+        QTextEdit* texte = new QTextEdit;
+        layoutFenetre->addWidget(texte, 2, 0, 1, 2);
+        boutonTexte->hide();
+
+    }
+
+    void widgetAjouterFichier()
+    {
+        adresseFichier = new QLineEdit;
+
+        QPushButton* button = new QPushButton("...");
+        connect(button, SIGNAL(clicked()), SLOT(chercherFichier()));
+        QHBoxLayout* layout = new QHBoxLayout;
+        layout->addWidget(adresseFichier);
+        layout->addWidget(button);
+        layoutFenetre->addLayout(layout, 1, 0, 1, 2);
+        boutonFichier->hide();
+    }
+
+    void chercherFichier()
+    {
+
+        QString fichier = QFileDialog::getOpenFileName(this, tr("Ouvrir un fichier"),
+                                                        QDir::toNativeSeparators(QDir::currentPath()),
+                                                        tr("Images (*.png *.gif *.jpg);;"
+                                                           "Fichiers audio (*.mp3 *.wav *.wma);;"
+                                                           "Fichiers vidéo (*.mp4 *.avi *.wmv)"));
+
+        if (!fichier.isNull())
+            adresseFichier->setText(QDir::toNativeSeparators(fichier));
+    }
 };
 
+class ContenuFenetreVisualisationNote : public ContenuSousFenetre
+{
+    Q_OBJECT
+protected:
+    NotesManager manager;
+public:
+    ContenuFenetreVisualisationNote(QListWidgetItem* i): ContenuSousFenetre()
+    {
+        //Récupération de la note dans le manager
+        manager = NotesManager::getInstance();
+        Note& n = manager.getNote(i->text().toLocal8Bit().constData());
+        //bug de l'instruction ci-dessus
 
+        //Création du layout de la sous fenetre
+        titre->setPlaceholderText(QString::fromStdString(n.getTitle()));
+        formLayout->addRow("Titre", titre);
+        layoutFenetre->addLayout(formLayout, 0, 0);
+        titre->setDisabled(true);
 
-
+        setLayout(layoutFenetre);
+        setWindowTitle(QString::fromStdString(n.getId()));
+        setWindowIcon(QIcon("C:/Users/SilverEye/notepod/edit-set-5-256.png"));
+    }
+};
 
 
 
