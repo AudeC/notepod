@@ -38,6 +38,9 @@ public:
     }
 };
 
+/*
+ * Classe fenêtre principale
+ */
 class FenetrePrincipale : public QMainWindow
 {
     Q_OBJECT
@@ -56,7 +59,7 @@ protected:
     QVBoxLayout* dockLayout;
     QWidget* widget;
 
-    QDockWidget* dock2;
+    QDockWidget* dockRelations;
     void creerDock();
 
     QMdiSubWindow* sousFenetre;
@@ -77,6 +80,9 @@ public slots:
     void redimensionnerFenetre();
 };
 
+/*
+ * Classe gérant le contenu des sous-fenêtres
+ */
 class ContenuSousFenetre : public QWidget
 {
     Q_OBJECT
@@ -97,18 +103,20 @@ public slots:
     void ouvrirDenis(){Denis ah; ah.ouvrir();}
 };
 
+/*
+ * Classe gérant le contenu des sous-fenêtres d'ajout de note
+ */
 class ContenuFenetreAjoutNote : public ContenuSousFenetre
 {
     Q_OBJECT
 protected:
     QLineEdit* id;
     QPushButton* boutonValiderNote;
-    QVBoxLayout* layoutBoutons;
-    QHBoxLayout* layoutAjout;
-    QPushButton* boutonTexte;
-    QPushButton* boutonFichier;
+    QComboBox* options;
+    QAction* ajouterTexte;
+    QAction* ajouterTache;
+    QAction* ajouterFichier;
     QLineEdit* adresseFichier;
-    QPushButton* boutonTache;
 
 public:
     ContenuFenetreAjoutNote(): ContenuSousFenetre()
@@ -118,28 +126,30 @@ public:
         formLayout->addRow("Titre", titre);
         layoutFenetre->addLayout(formLayout, 0, 0);
 
-        layoutBoutons = new QVBoxLayout;
-        boutonTexte = new QPushButton("Ajouter un texte");
-        connect(boutonTexte, SIGNAL(clicked()), this, SLOT(widgetAjouterTexte()));
-        layoutBoutons->addWidget(boutonTexte);
-        boutonTache = new QPushButton("Ajouter une tâche");
-        connect(boutonTache, SIGNAL(clicked()), this, SLOT(ouvrirDenis()));
-        layoutBoutons->addWidget(boutonTache);
-        boutonFichier = new QPushButton("Ajouter un fichier");
-        connect(boutonFichier, SIGNAL(clicked()), this, SLOT(widgetAjouterFichier()));
-        layoutBoutons->addWidget(boutonFichier);
-        layoutFenetre->addLayout(layoutBoutons, 0, 1);
+        options = new QComboBox;
+        options->addItem(QString("<Choisissez un type de contenu>"));
+
+        ajouterTexte = new QAction("Texte", this);
+        options->addItem(ajouterTexte->text(), QVariant::fromValue(ajouterTexte));
+        connect(ajouterTexte, SIGNAL(triggered()), this, SLOT(widgetAjouterTexte()));
+
+        ajouterTache = new QAction("Tâche", this);
+        options->addItem(ajouterTache->text(), QVariant::fromValue(ajouterTache));
+        connect(ajouterTache, SIGNAL(triggered()), this, SLOT(ouvrirDenis()));
+
+        ajouterFichier = new QAction("Fichier média", this);
+        options->addItem(ajouterFichier->text(), QVariant::fromValue(ajouterFichier));
+        connect(ajouterFichier, SIGNAL(triggered()), this, SLOT(widgetAjouterFichier()));
+
+        layoutFenetre->addWidget(options, 1, 0);
+        connect(options, SIGNAL(currentIndexChanged(int)), this, SLOT(selectionAction(int)));
 
         boutonValiderNote = new QPushButton("Créer la nouvelle note");
         connect(boutonValiderNote, SIGNAL(clicked()), this, SLOT(insererNote()));
         boutonValiderNote->setShortcut(QKeySequence(Qt::Key_Return));
-        layoutFenetre->addWidget(boutonValiderNote, 3, 0, 1, 2);
+        layoutFenetre->addWidget(boutonValiderNote, 3, 0);
         boutonValiderNote->setDisabled(true);
-        connect(id, SIGNAL(textChanged(QString)), this, SLOT(montrerBouton()));
-        connect(titre, SIGNAL(textChanged(QString)), this, SLOT(montrerBouton()));
-        /*if (&&) emit formulaireRempli();
-        connect(this, SIGNAL(formulaireRempli()), this, SLOT(montrerBouton()));*/
-        //amélioration: faire en sorte que le slot ne soit appelé que si les deux signaux ont été émis
+
         setLayout(layoutFenetre);
         setWindowTitle("Nouvelle note");
     }
@@ -148,7 +158,6 @@ public:
 
 signals:
     void nouvelleNote(QString id, QString titre);
-    //void formulaireRempli();
     void demandeRedimensionnement();
 
 public slots:
@@ -166,28 +175,47 @@ public slots:
         // TODO: ajouter une erreur au cas où l'identificateur existerait déjà
     }
 
-    void montrerBouton() {boutonValiderNote->setDisabled(false);}
+    void montrerBouton()
+    {
+        if (id->text()!=QString()&&titre->text()!=QString())boutonValiderNote->setDisabled(false);
+        else boutonValiderNote->setDisabled(true);
+    }
+
+    void selectionAction(int index)
+    {
+        QAction* action = options->itemData(index, Qt::UserRole).value<QAction*>();
+        if (action)
+        {
+            action->trigger();
+        }
+    }
 
     void widgetAjouterTexte()
     {
         emit demandeRedimensionnement();
+        QLayoutItem* item = layoutFenetre->itemAtPosition(2, 0);
+        if (item && item->widget()) item->widget()->deleteLater();
+        //item->deleteLater();
         QTextEdit* texte = new QTextEdit;
-        layoutFenetre->addWidget(texte, 2, 0, 1, 2);
-        boutonTexte->hide();
-
+        layoutFenetre->addWidget(texte, 2, 0);
+        connect(id, SIGNAL(textChanged(QString)), this, SLOT(montrerBouton()));
+        connect(titre, SIGNAL(textChanged(QString)), this, SLOT(montrerBouton()));
     }
 
     void widgetAjouterFichier()
     {
         adresseFichier = new QLineEdit;
-
-        QPushButton* button = new QPushButton("...");
+        QLayoutItem* item = layoutFenetre->itemAtPosition(2, 0);
+        if (item && item->widget()) item->widget()->deleteLater();
+        //item->deleteLater();
+        QPushButton* button = new QPushButton("Parcourir");
         connect(button, SIGNAL(clicked()), SLOT(chercherFichier()));
         QHBoxLayout* layout = new QHBoxLayout;
         layout->addWidget(adresseFichier);
         layout->addWidget(button);
-        layoutFenetre->addLayout(layout, 1, 0, 1, 2);
-        boutonFichier->hide();
+        layoutFenetre->addLayout(layout, 2, 0);
+        connect(id, SIGNAL(textChanged(QString)), this, SLOT(montrerBouton()));
+        connect(titre, SIGNAL(textChanged(QString)), this, SLOT(montrerBouton()));
     }
 
     void chercherFichier()
@@ -204,6 +232,9 @@ public slots:
     }
 };
 
+/*
+ * Classe gérant le contenu des sous-fenêtres de visualisation de notes
+ */
 class ContenuFenetreVisualisationNote : public ContenuSousFenetre
 {
     Q_OBJECT

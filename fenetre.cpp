@@ -48,8 +48,8 @@ void FenetrePrincipale::creerDock()
     dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
 
-    dock2 = new QDockWidget(tr("Relations"), this);
-    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    dockRelations = new QDockWidget(tr("Relations"), this);
+    dockRelations->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 
     dockLayout = new QVBoxLayout;
 
@@ -74,9 +74,9 @@ void FenetrePrincipale::creerDock()
     // "Accrocher" les docks
     dock->setWidget(widget);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
-    addDockWidget(Qt::RightDockWidgetArea, dock2);
+    addDockWidget(Qt::RightDockWidgetArea, dockRelations);
 
-    menuAffichage->addAction(dock2->toggleViewAction());
+    menuAffichage->addAction(dockRelations->toggleViewAction());
 }
 
 /*
