@@ -214,6 +214,7 @@ public:
     {
         //Récupération de la note dans le manager
         manager = NotesManager::getInstance();
+        try{
         Note& n = manager.getNote(i->text().toLocal8Bit().constData());
         //bug de l'instruction ci-dessus
 
@@ -226,6 +227,7 @@ public:
         setLayout(layoutFenetre);
         setWindowTitle(QString::fromStdString(n.getId()));
         setWindowIcon(QIcon("C:/Users/SilverEye/notepod/edit-set-5-256.png"));
+        }catch(NotesException e) {std::cout<<e.getInfo();}
     }
 };
 
